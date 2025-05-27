@@ -1,0 +1,10 @@
+README.md
+pyproject.toml
+src/__init__.py
+src/main.py
+src/ml_ops.egg-info/PKG-INFO
+src/ml_ops.egg-info/SOURCES.txt
+src/ml_ops.egg-info/dependency_links.txt
+src/ml_ops.egg-info/entry_points.txt
+src/ml_ops.egg-info/requires.txt
+src/ml_ops.egg-info/top_level.txt
