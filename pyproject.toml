@@ -1,9 +1,9 @@
 [project]
 name = "ml-ops"
 version = "0.1.0"
-description = "Add your description here"
+description = "ML Ops homeworks"
 readme = "README.md"
-requires-python = ">=3.9.0"
+requires-python = ">=3.10.0"
 authors = [
     {name = "Anastasiia Ostapchuk", email = "kisaost777@gmail.com"},
 ]
@@ -15,6 +15,13 @@ dependencies = [
 [dependency-groups]
 dev = [
     "mypy>=1.15.0",
+    "isort>=6.0.1",
+    "flake8>=7.2.0",
+    "mypy>=1.15.0",
+    "black>=25.1.0",
+    "build>=1.2.2",
+    "twine>=6.1.0",
+    "pre-commit>=4.2.0",
 ]
 
 [project.scripts]
