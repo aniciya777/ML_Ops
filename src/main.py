@@ -1,8 +1,8 @@
 import os
 from typing import TypedDict
 
-from fastapi import FastAPI
 import uvicorn
+from fastapi import FastAPI
 
 app = FastAPI()
 
@@ -11,6 +11,7 @@ class SumResult(TypedDict):
     """
     Response model for the sum of two numbers
     """
+
     result: int
 
 
