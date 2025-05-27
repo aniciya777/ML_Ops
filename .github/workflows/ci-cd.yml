@@ -71,6 +71,9 @@ jobs:
 
   docker:
     name: 🐋 Build & Push Docker image
+    permissions:
+      contents: read
+      packages: write
     needs: lint
     runs-on: ubuntu-latest
     steps:
