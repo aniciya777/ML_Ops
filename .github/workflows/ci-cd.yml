@@ -26,10 +26,10 @@ jobs:
         run: uv sync --dev
 
       - name: isort — проверка импортов
-        run: isort --check-only src
+        run: uv run isort --check-only src
 
       - name: flake8 — проверка стиля
-        run: flake8 src
+        run: uv run flake8 src
 
       - name: mypy — статическая типизация
-        run: mypy src
+        run: uv run mypy src
