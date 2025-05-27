@@ -2,3 +2,4 @@
 .idea
 src/__pycache__
 src/ml_ops.egg-info
+dist/
