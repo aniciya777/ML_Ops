@@ -1,4 +1,4 @@
-from pydub import AudioSegment  # type: ignore 
+from pydub import AudioSegment
 
 
 # Функция для конвертации ogg в wav
