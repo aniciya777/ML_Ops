@@ -1,0 +1,4 @@
+[core]
+    remote = myremote
+['remote "myremote"']
+    url = webdavs://aspirantdrago.ru/webdav/
