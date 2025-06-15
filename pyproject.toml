@@ -9,7 +9,10 @@ authors = [
 ]
 dependencies = [
     "fastapi>=0.115.12",
+    "numpy>=2.2.6",
     "pydub>=0.25.1",
+    "scipy>=1.15.3",
+    "scipy-stubs>=1.15.3.0",
     "uvicorn>=0.34.2",
 ]
 
