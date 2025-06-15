@@ -5,7 +5,7 @@ description = "ML Ops homeworks"
 readme = "README.md"
 requires-python = ">=3.10.0"
 authors = [
-    {name = "Anastasiia Ostapchuk", email = "kisaost777@gmail.com"},
+    {name = "Anastasiia Ostapchuk", email = "kisaost777@gmail.com"},                                                   
 ]
 dependencies = [
     "fastapi>=0.115.12",

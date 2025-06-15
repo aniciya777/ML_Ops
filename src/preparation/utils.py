@@ -83,7 +83,8 @@ def convert_wav_to_16bit(
         # Сохраняем как 16-битный WAV
         audio.export(output_file, format="wav")
     except Exception as e:
-        print(f"convert_wav_to_16bit: Ошибка при конвертации файла {input_file}: {e}")
+        print("convert_wav_to_16bit: Ошибка при конвертации файла "
+              f"{input_file}: {e}")
 
 
 def convert_stereo_to_mono(
@@ -108,4 +109,5 @@ def convert_stereo_to_mono(
 
         wavfile.write(output_file, params.framerate, mono_data)
     except Exception as e:
-        print(f"convert_stereo_to_mono: Ошибка при конвертации файла {input_file}: {e}")
+        print("convert_stereo_to_mono: Ошибка при конвертации файла "
+              f"{input_file}: {e}")
