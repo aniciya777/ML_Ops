@@ -5,6 +5,7 @@ from os import PathLike, makedirs, path
 
 import numpy as np
 from pydub import AudioSegment
+from pydub.silence import detect_nonsilent
 from scipy.io import wavfile
 
 
@@ -12,7 +13,7 @@ from scipy.io import wavfile
 def convert_ogg_to_wav(
         input_file: PathLike[str],
         output_file: PathLike[str]
-        ) -> None:
+) -> None:
     try:
         # Загружаем ogg файл
         audio = AudioSegment.from_file(input_file, format="ogg")
@@ -26,7 +27,7 @@ def convert_ogg_to_wav(
 def convert_mp3_to_wav(
         input_file: PathLike[str],
         output_file: PathLike[str]
-        ) -> None:
+) -> None:
     try:
         # Загружаем mp3 файл
         audio = AudioSegment.from_mp3(input_file)
@@ -39,7 +40,7 @@ def convert_mp3_to_wav(
 def convert_opus_to_wav(
         input_file: PathLike[str],
         output_file: PathLike[str]
-        ) -> None:
+) -> None:
     try:
         if not path.exists(input_file):
             print(f"convert_opus_to_wav: Файл {input_file} не найден!")
@@ -74,7 +75,7 @@ def move_file(source: PathLike[str], destination: PathLike[str]) -> None:
 def convert_wav_to_16bit(
         input_file: PathLike[str],
         output_file: PathLike[str]
-        ) -> None:
+) -> None:
     try:
         # Загружаем WAV файл
         audio = AudioSegment.from_wav(input_file)
@@ -90,7 +91,7 @@ def convert_wav_to_16bit(
 def convert_stereo_to_mono(
         input_file: PathLike[str],
         output_file: PathLike[str]
-        ) -> None:
+) -> None:
     try:
         with wave.open(str(input_file), "rb") as wav_file:
             params = wav_file.getparams()
@@ -111,3 +112,39 @@ def convert_stereo_to_mono(
     except Exception as e:
         print("convert_stereo_to_mono: Ошибка при конвертации файла "
               f"{input_file}: {e}")
+
+
+def remove_silence(
+        input_path: PathLike[str],
+        output_path: PathLike[str],
+        silence_thresh: int = -50,
+        min_silence_len: int = 100
+) -> None:
+    """Удаляет тишину в начале и конце аудиофайла."""
+    try:
+        audio = AudioSegment.from_file(input_path)
+        # Поиск неслышимых сегментов
+        nonsilent_ranges = detect_nonsilent(audio,
+                                            min_silence_len=min_silence_len,
+                                            silence_thresh=silence_thresh)
+        if nonsilent_ranges:
+            # Определение начала и конца неслышимых сегментов
+            start_trim = nonsilent_ranges[0][0]
+            end_trim = nonsilent_ranges[-1][1]
+            # Обрезка аудио
+            trimmed_audio = audio[start_trim:end_trim]
+            trimmed_audio.export(output_path, format="wav")
+    except Exception as e:
+        print(f"remove_silence: Ошибка обработки {input_path}: {e}")
+
+
+def convert_to_16000hz(
+        input_path: PathLike[str],
+        output_path: PathLike[str]
+) -> None:
+    try:
+        audio = AudioSegment.from_file(input_path)
+        audio = audio.set_frame_rate(16000)  # Установка частоты дискретизации
+        audio.export(output_path, format="wav")
+    except Exception as e:
+        print(f"convert_to_16000hz: Ошибка обработки {input_path}: {e}")

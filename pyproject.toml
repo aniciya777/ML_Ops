@@ -8,6 +8,7 @@ authors = [
     {name = "Anastasiia Ostapchuk", email = "kisaost777@gmail.com"},                                                   
 ]
 dependencies = [
+    "dvc>=3.60.1",
     "fastapi>=0.115.12",
     "numpy>=2.2.6",
     "pydub>=0.25.1",
