@@ -19,7 +19,7 @@ def main() -> None:
     transport_files("input/ML/Watsapp/Like", "output/ML/Like")
     transport_files("input/ML/Watsapp/Rock", "output/ML/Rock")
 
-    transport_files("input/ML/Запись Дин", "")
+    transport_files("input/ML/Запись Дин")
 
 
 if __name__ == '__main__':

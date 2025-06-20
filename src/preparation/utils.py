@@ -1,5 +1,6 @@
 import shutil
 import subprocess
+import sys
 import wave
 from os import makedirs, path, walk
 from pathlib import Path
@@ -151,7 +152,7 @@ def convert_to_16000hz(
 
 def transport_files(
         old_dir: Path | str,
-        new_dir: Path | str | None
+        new_dir: Path | str | None = None
 ) -> None:
     if new_dir and not path.exists(new_dir):
         makedirs(new_dir)
@@ -170,8 +171,9 @@ def transport_files(
                         new_full_path = new_full_path.with_suffix(".wav")
                         break
                 else:
-                    print(f"transport_files: пропуск файла {old_full_path}")
-                    return
+                    print(f"transport_files: пропуск файла {old_full_path}",
+                          file=sys.stderr)
+                    continue
             if filename.suffix == ".ogg":
                 convert_ogg_to_wav(old_full_path, new_full_path)
             elif filename.suffix == ".opus":
@@ -181,4 +183,8 @@ def transport_files(
             elif filename.suffix == ".wav":
                 move_file(old_full_path, new_full_path)
             else:
-                print(f"transport_files: пропуск файла {old_full_path}")
+                print(f"transport_files: пропуск файла {old_full_path}",
+                      file=sys.stderr)
+                continue
+            convert_wav_to_16bit(new_full_path, new_full_path)
+            print(new_full_path, flush=True)
