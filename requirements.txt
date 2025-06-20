@@ -6,3 +6,6 @@ scipy>=1.15.3
 scipy-stubs>=1.15.3.0
 dvc>=3.60.1
 dvc-webdav>=3.0.0
+matplotlib>=3.10.3
+librosa>=0.11.0
+soundfile>=0.13.1

@@ -1,3 +1,4 @@
+import os
 import shutil
 import subprocess
 import sys
@@ -5,7 +6,9 @@ import wave
 from os import makedirs, path, walk
 from pathlib import Path
 
+import librosa
 import numpy as np
+import soundfile  # type: ignore
 from pydub import AudioSegment
 from pydub.silence import detect_nonsilent
 from scipy.io import wavfile
@@ -150,6 +153,32 @@ def convert_to_16000hz(
         print(f"convert_to_16000hz: Ошибка обработки {input_path}: {e}")
 
 
+def padding_file(
+        input_path: Path,
+        output_path: Path,
+        duration: float | int,
+        noise_factor: float = 0.02  # Коэффициент шума
+) -> bool:
+    signal, sr = librosa.load(input_path, sr=None)
+    target_length = int(duration * sr)  # Количество сэмплов для duration
+    # Если аудиофайл короче 2.6 сек, дополняем тишиной
+    if len(signal) == target_length:
+        return True
+    elif len(signal) > target_length:
+        os.remove(output_path)
+        print(f"Deleted file: {output_path}")
+        return False
+    pad_length = target_length - len(signal)
+    signal = np.pad(signal, (0, pad_length), mode='constant')
+    # Генерируем белый шум
+    noise = np.random.randn(target_length)
+    # Добавляем белый шум
+    signal_noisy = signal + noise_factor * noise
+    # Сохраняем зашумленный файл
+    soundfile.write(output_path, signal_noisy, sr)
+    return True
+
+
 def transport_files(
         old_dir: Path | str,
         new_dir: Path | str | None = None
@@ -163,7 +192,7 @@ def transport_files(
                 new_full_path = (Path(new_dir) / filename).with_suffix(".wav")
             else:
                 for pattern in (
-                    "Catch", "Gun", "Index", "Like", "Relax", "Rock"
+                        "Catch", "Gun", "Index", "Like", "Relax", "Rock"
                 ):
                     if pattern in str(old_full_path):
                         new_full_path = (
@@ -190,4 +219,5 @@ def transport_files(
             convert_stereo_to_mono(new_full_path, new_full_path)
             remove_silence(new_full_path, new_full_path)
             convert_to_16000hz(new_full_path, new_full_path)
+            padding_file(new_full_path, new_full_path, duration=2.6)
             print(new_full_path, flush=True)
