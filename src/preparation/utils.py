@@ -188,4 +188,5 @@ def transport_files(
                 continue
             convert_wav_to_16bit(new_full_path, new_full_path)
             convert_stereo_to_mono(new_full_path, new_full_path)
+            remove_silence(new_full_path, new_full_path)
             print(new_full_path, flush=True)
