@@ -1,23 +1,30 @@
-# Базовый образ с Python 3.12.10-slim
 FROM python:3.12.10-slim
 
-RUN apt update && apt upgrade -y
+RUN apt update
+
+RUN apt install -y --no-install-recommends ffmpeg && \
+    apt clean
 
 # Установка утилиты uv
-RUN pip install --no-cache-dir uv
+RUN pip3 install uv
 
 # Рабочая директория внутри контейнера
 WORKDIR /app
 
-# Копируем весь код приложения
-COPY . .
+COPY pyproject.toml .
+COPY uv.lock .
+COPY README.md .
+RUN mkdir "src"
 
 # Установка зависимостей в системную среду
-RUN uv sync
+RUN uv sync --locked
 
 # По умолчанию порт приложения
 ENV PORT=8000
 EXPOSE 8000
+
+# Копируем весь код приложения
+COPY . .
 
 # Команда запуска приложения
 CMD ["uv", "run", "api"]

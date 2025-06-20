@@ -4,3 +4,8 @@ src/__pycache__
 src/ml_ops.egg-info
 dist/
 *.egg-info/
+
+data/input
+data/output
+
+.mypy_cache/

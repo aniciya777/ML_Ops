@@ -26,3 +26,14 @@
 **/.github
 **/.run
 LICENSE
+
+# DVC
+.dvc/cache/
+.dvc/tmp/
+
+.idea/
+
+.mypy_cache/
+
+data/input
+data/output

@@ -1,7 +1,8 @@
 import shutil
 import subprocess
 import wave
-from os import PathLike, makedirs, path
+from os import makedirs, path, walk
+from pathlib import Path
 
 import numpy as np
 from pydub import AudioSegment
@@ -11,47 +12,42 @@ from scipy.io import wavfile
 
 # Функция для конвертации ogg в wav
 def convert_ogg_to_wav(
-        input_file: PathLike[str],
-        output_file: PathLike[str]
+        input_file: Path,
+        output_file: Path
 ) -> None:
     try:
-        # Загружаем ogg файл
         audio = AudioSegment.from_file(input_file, format="ogg")
-
-        # Сохраняем как wav
         audio.export(output_file, format="wav")
     except Exception as e:
         print(f"convert_ogg_to_wav: Ошибка при конвертации: {e}")
 
 
 def convert_mp3_to_wav(
-        input_file: PathLike[str],
-        output_file: PathLike[str]
+        input_file: Path,
+        output_file: Path
 ) -> None:
     try:
-        # Загружаем mp3 файл
         audio = AudioSegment.from_mp3(input_file)
-        # Сохраняем как wav
         audio.export(output_file, format="wav")
     except Exception as e:
         print(f"convert_mp3_to_wav: Ошибка при конвертации: {e}")
 
 
 def convert_opus_to_wav(
-        input_file: PathLike[str],
-        output_file: PathLike[str]
+        input_file: Path,
+        output_file: Path
 ) -> None:
     try:
         if not path.exists(input_file):
             print(f"convert_opus_to_wav: Файл {input_file} не найден!")
             return
-        command = [
+        command: list[str | Path] = [
             "ffmpeg",
-            "-i", str(input_file),
+            "-i", input_file,
             "-acodec", "pcm_s16le",
             "-ar", "44100",
             "-ac", "2",
-            str(output_file)
+            output_file
         ]
         subprocess.run(
             command,
@@ -65,7 +61,10 @@ def convert_opus_to_wav(
         print(f"convert_opus_to_wav: Другая ошибка: {e}")
 
 
-def move_file(source: PathLike[str], destination: PathLike[str]) -> None:
+def move_file(
+        source: Path,
+        destination: Path
+) -> None:
     try:
         shutil.copy2(source, destination)
     except Exception as e:
@@ -73,8 +72,8 @@ def move_file(source: PathLike[str], destination: PathLike[str]) -> None:
 
 
 def convert_wav_to_16bit(
-        input_file: PathLike[str],
-        output_file: PathLike[str]
+        input_file: Path,
+        output_file: Path
 ) -> None:
     try:
         # Загружаем WAV файл
@@ -89,8 +88,8 @@ def convert_wav_to_16bit(
 
 
 def convert_stereo_to_mono(
-        input_file: PathLike[str],
-        output_file: PathLike[str]
+        input_file: Path,
+        output_file: Path
 ) -> None:
     try:
         with wave.open(str(input_file), "rb") as wav_file:
@@ -115,8 +114,8 @@ def convert_stereo_to_mono(
 
 
 def remove_silence(
-        input_path: PathLike[str],
-        output_path: PathLike[str],
+        input_path: Path,
+        output_path: Path,
         silence_thresh: int = -50,
         min_silence_len: int = 100
 ) -> None:
@@ -139,8 +138,8 @@ def remove_silence(
 
 
 def convert_to_16000hz(
-        input_path: PathLike[str],
-        output_path: PathLike[str]
+        input_path: Path,
+        output_path: Path
 ) -> None:
     try:
         audio = AudioSegment.from_file(input_path)
@@ -148,3 +147,38 @@ def convert_to_16000hz(
         audio.export(output_path, format="wav")
     except Exception as e:
         print(f"convert_to_16000hz: Ошибка обработки {input_path}: {e}")
+
+
+def transport_files(
+        old_dir: Path | str,
+        new_dir: Path | str | None
+) -> None:
+    if new_dir and not path.exists(new_dir):
+        makedirs(new_dir)
+    for dirname, _, filenames in walk(old_dir):
+        for filename in map(Path, filenames):
+            old_full_path = Path(old_dir) / filename
+            if new_dir is not None:
+                new_full_path = (Path(new_dir) / filename).with_suffix(".wav")
+            else:
+                for pattern in (
+                    "Catch", "Gun", "Index", "Like", "Relax", "Rock"
+                ):
+                    if pattern in str(old_full_path):
+                        new_full_path = (
+                                Path("output") / "ML" / pattern / filename)
+                        new_full_path = new_full_path.with_suffix(".wav")
+                        break
+                else:
+                    print(f"transport_files: пропуск файла {old_full_path}")
+                    return
+            if filename.suffix == ".ogg":
+                convert_ogg_to_wav(old_full_path, new_full_path)
+            elif filename.suffix == ".opus":
+                convert_opus_to_wav(old_full_path, new_full_path)
+            elif filename.suffix == ".mp3":
+                convert_mp3_to_wav(old_full_path, new_full_path)
+            elif filename.suffix == ".wav":
+                move_file(old_full_path, new_full_path)
+            else:
+                print(f"transport_files: пропуск файла {old_full_path}")

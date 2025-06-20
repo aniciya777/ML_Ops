@@ -3,7 +3,7 @@ name = "ml-ops"
 version = "0.1.0"
 description = "ML Ops homeworks"
 readme = "README.md"
-requires-python = ">=3.10.0"
+requires-python = ">=3.12.0"
 authors = [
     {name = "Anastasiia Ostapchuk", email = "kisaost777@gmail.com"},                                                   
 ]
@@ -34,6 +34,7 @@ dev = [
 
 [project.scripts]
 api = "main:main"
+prepare = "preparation.prepare:main"
 
 [tool.isort]
 profile = "black"
