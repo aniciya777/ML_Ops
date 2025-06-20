@@ -187,4 +187,5 @@ def transport_files(
                       file=sys.stderr)
                 continue
             convert_wav_to_16bit(new_full_path, new_full_path)
+            convert_stereo_to_mono(new_full_path, new_full_path)
             print(new_full_path, flush=True)
