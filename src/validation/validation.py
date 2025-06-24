@@ -1,4 +1,3 @@
-import json
 import os
 from pathlib import Path
 
@@ -17,9 +16,8 @@ def main() -> None:
 
     MODEL_DIR = Path("data/models")
 
-    REVISIONS = [
-        "fcd780e6",  # тег DVC/Git
-    ]
+    with open("data/сomparison_of_revisions.txt") as f:
+        REVISIONS = map(str.strip, f.readlines())
 
     dummy = tf.data.Dataset.load(str(TEST_DS_PATH), compression="GZIP")
     spec = dummy.element_spec
@@ -31,38 +29,28 @@ def main() -> None:
     results = {}
     for rev in REVISIONS:
         print(f"\n Process the revision `{rev}`")
-        # 1) вытаскиваем модель из DVC
         local_model = fetch_model_at_rev(MODEL_DIR / "model1.keras", rev)
-        print(f"  downloaded в {local_model}")
+        print(f"  downloaded in {local_model}")
 
-        # 2) оцениваем
         report, cm = evaluate_model(local_model, test_ds)
         results[rev] = {"report": report, "cm": cm}
-
-        # 3) удаляем временный файл
         os.remove(local_model)
 
-    # 4) сохраняем JSON с цифрами
-    with open("eval_versions.json", "w") as jf:
-        json.dump(results, jf, indent=2)
-
     # 5) пишем Markdown-отчет
-    with open("comparison_versions.md", "w") as mf:
+    with open("comparison_versions.md", "w", encoding='utf-8') as mf:
         mf.write("# Сравнение версий модели на тесте\n\n")
         for rev, res in results.items():
             mf.write(f"## Revision `{rev}`\n\n")
             acc = res["report"]["accuracy"]
             mf.write(f"**Accuracy**: {acc:.4f}  \n\n")
             mf.write("**P / R / F1 по классам:**  \n")
-            for cls in label_names:
-                m = res["report"][cls]
+            for i, cls in enumerate(label_names):
+                m = res["report"][str(i)]
                 mf.write(f"- `{cls}`: P={m['precision']:.2f}, "
                          f"R={m['recall']:.2f}, F1={m['f1-score']:.2f}\n")
             mf.write("\nМатрица ошибок:\n\n```\n")
             mf.write(np.array2string(res["cm"]))
             mf.write("\n```\n\n---\n\n")
-
-    print("\nГотово! Смотрите eval_versions.json и comparison_versions.md")
 
 
 if __name__ == '__main__':
