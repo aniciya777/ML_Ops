@@ -3,41 +3,45 @@ name = "ml-ops"
 version = "0.1.0"
 description = "ML Ops homeworks"
 readme = "README.md"
-requires-python = ">=3.12.0"
+requires-python = ">=3.12.10"
 authors = [
     {name = "Anastasiia Ostapchuk", email = "kisaost777@gmail.com"},                                                   
 ]
 dependencies = [
     "dvc>=3.60.1",
     "dvc-webdav>=3.0.0",
-    "fastapi>=0.115.12",
+    "fastapi>=0.115.13",
     "librosa>=0.11.0",
     "matplotlib>=3.10.3",
-    "numpy>=2.2.6",
+    "numpy==2.1.3",
     "pydub>=0.25.1",
+    "scikit-learn>=1.7.0",
     "scipy>=1.15.3",
-    "scipy-stubs>=1.15.3.0",
+    "scipy-stubs>=1.16.0.0",
+    "seaborn>=0.13.2",
     "soundfile>=0.13.1",
-    "uvicorn>=0.34.2",
+    "tensorflow>=2.19.0",
+    "uvicorn>=0.34.3",
 ]
 
 [dependency-groups]
 dev = [
-    "mypy>=1.15.0",
+    "mypy>=1.16.0",
     "isort>=6.0.1",
-    "flake8>=7.2.0",
-    "mypy>=1.15.0",
+    "flake8>=7.3.0",
     "black>=25.1.0",
     "build>=1.2.2",
     "twine>=6.1.0",
     "pre-commit>=4.2.0",
     "setuptools>=80.9.0",
     "wheel>=0.45.1",
+    "types-tensorflow>=2.18.0.20250516",
 ]
 
 [project.scripts]
 api = "main:main"
 prepare = "preparation.prepare:main"
+train = "train.train:main"
 
 [tool.isort]
 profile = "black"

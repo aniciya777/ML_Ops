@@ -21,7 +21,11 @@ RUN uv sync --locked
 
 # По умолчанию порт приложения
 ENV PORT=8000
+
 EXPOSE 8000
+
+ENV TF_CPP_MIN_LOG_LEVEL=2
+ENV AUDIO_LENGTH=41600
 
 # Копируем весь код приложения
 COPY . .
