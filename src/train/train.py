@@ -3,7 +3,7 @@ import os
 
 import numpy as np
 import tensorflow as tf
-from sklearn.model_selection import KFold # type: ignore[import-untyped]
+from sklearn.model_selection import KFold  # type: ignore[import-untyped]
 
 from .config import Config
 from .model import build_model
