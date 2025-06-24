@@ -1,4 +1,5 @@
 import logging
+import os
 from pathlib import Path
 
 import numpy as np
@@ -109,11 +110,11 @@ def main() -> None:
         # run[f"training/model/folds/{fold_no}/final_loss"] = scores[1]
         # run[f"training/model/folds/{fold_no}/final_accuracy"] = scores[3]
 
-    # for i in range(Config.NUM_FOLDS):
-    #     my_models[i].save(os.path.join(
-    #         'data', 'models',
-    #         f'model{i + 1}.keras'
-    #     ))
+    for i in range(Config.NUM_FOLDS):
+        my_models[i].save(os.path.join(
+            'data', 'models',
+            f'model{i + 1}.keras'
+        ))
 
 
 def before_run() -> None:
