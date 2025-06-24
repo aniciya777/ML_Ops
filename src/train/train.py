@@ -124,7 +124,7 @@ def main() -> None:
     for i in range(Config.NUM_FOLDS):
         my_models[i].save(os.path.join(
             'data', 'models',
-            f'model{i + 1}.h5'
+            f'model{i + 1}.keras'
         ))
 
 
