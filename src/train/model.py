@@ -1,3 +1,4 @@
+import keras  # type: ignore
 import tensorflow as tf
 from tensorflow import Tensor
 from tensorflow.keras import layers, models
@@ -5,6 +6,7 @@ from tensorflow.keras import layers, models
 from .config import Config
 
 
+@keras.saving.register_keras_serializable()
 def SSIMLoss(y_true: Tensor, y_pred: Tensor) -> Tensor:
     return 1 - tf.reduce_mean(tf.image.ssim(y_true, y_pred, 1.0))
 

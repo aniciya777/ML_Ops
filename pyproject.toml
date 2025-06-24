@@ -43,6 +43,7 @@ api = "main:main"
 prepare = "preparation.prepare:main"
 train = "train.train:main"
 make_spec = "train.make_specrogram:main"
+validate = "validation.validation:main"
 
 [tool.isort]
 profile = "black"
