@@ -18,8 +18,7 @@ def main() -> None:
     MODEL_DIR = Path("data/models")
 
     REVISIONS = [
-        "f83cb089",  # тег DVC/Git
-        "1e0f6629",  # ещё один тег
+        "fcd780e6",  # тег DVC/Git
     ]
 
     dummy = tf.data.Dataset.load(str(TEST_DS_PATH), compression="GZIP")
