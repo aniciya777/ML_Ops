@@ -1,5 +1,5 @@
 import logging
-import os
+from pathlib import Path
 
 import numpy as np
 import tensorflow as tf
@@ -7,44 +7,28 @@ from sklearn.model_selection import KFold  # type: ignore[import-untyped]
 
 from .config import Config
 from .model import build_model
-from .utils import make_spec_ds, scheduler, squeeze
+from .utils import scheduler
 
 logging.basicConfig(level=logging.INFO)
 
 
 def main() -> None:
     logging.info(tf.config.list_physical_devices('GPU'))
+    out_dir = Path("data/spec_ds")
+    train_path = out_dir / "train_specs"
 
-    data_dir = "data/output/ML"
+    loaded_ds = tf.data.Dataset.load(
+        str(train_path),
+        compression="GZIP"
+    )
+    label_names = np.load(out_dir / "label_names.npy")
+    logging.info(f"Loaded classes: {label_names}")
 
-    train_ds, test_ds = tf.keras.utils.audio_dataset_from_directory(
-        directory=data_dir,
-        batch_size=None,
-        validation_split=0.1,
-        seed=Config.SEED,
-        output_sequence_length=Config.AUDIO_LENGTH,
-        subset='both')
-    label_names = np.array(train_ds.class_names)
-    logging.info(f"label_names: {label_names}")
-
-    train_ds = train_ds.map(squeeze, tf.data.AUTOTUNE)
-    # test_ds = test_ds.map(squeeze, tf.data.AUTOTUNE)
-
-    logging.info("Making spectrogram...")
-    train_spectrogram_ds = make_spec_ds(train_ds) \
-        .cache() \
-        .shuffle(10000) \
-        .prefetch(tf.data.AUTOTUNE)
-    # test_spectrogram_ds = make_spec_ds(test_ds) \
-    #     .batch(64) \
-    #     .cache() \
-    #     .prefetch(tf.data.AUTOTUNE)
-    logging.info("Maked spectrogram")
     input_shape = (Config.SPECTROGRAM_WIDTH, Config.SPECTROGRAM_HEIGHT, 1)
     logging.info(f"input_shape: {input_shape}")
     num_labels = len(label_names)
 
-    all_data = list(train_spectrogram_ds)  # оставляем как список
+    all_data = list(loaded_ds)  # оставляем как список
     kf = KFold(
         n_splits=Config.NUM_FOLDS,
         shuffle=True,
@@ -76,15 +60,19 @@ def main() -> None:
             (list(val_specs), (list(val_labels), list(val_specs))))
 
         # Батчим, кешируем и префетчим
-        train_ds_cv = train_ds_cv \
-            .batch(Config.BATCH_SIZE) \
-            .cache() \
-            .shuffle(1000) \
+        train_ds_cv = (
+            train_ds_cv
+            .shuffle(1_000)
+            .batch(Config.BATCH_SIZE)
+            .cache()
             .prefetch(tf.data.AUTOTUNE)
-        val_ds_cv = val_ds_cv \
-            .batch(Config.BATCH_SIZE) \
-            .cache() \
+        )
+        val_ds_cv = (
+            val_ds_cv
+            .batch(Config.BATCH_SIZE)
+            .cache()
             .prefetch(tf.data.AUTOTUNE)
+        )
 
         model = build_model(input_shape, num_labels,
                             class_loss_weight=class_loss_weight,
@@ -121,11 +109,11 @@ def main() -> None:
         # run[f"training/model/folds/{fold_no}/final_loss"] = scores[1]
         # run[f"training/model/folds/{fold_no}/final_accuracy"] = scores[3]
 
-    for i in range(Config.NUM_FOLDS):
-        my_models[i].save(os.path.join(
-            'data', 'models',
-            f'model{i + 1}.keras'
-        ))
+    # for i in range(Config.NUM_FOLDS):
+    #     my_models[i].save(os.path.join(
+    #         'data', 'models',
+    #         f'model{i + 1}.keras'
+    #     ))
 
 
 def before_run() -> None:
