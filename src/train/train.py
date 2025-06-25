@@ -2,11 +2,11 @@ import logging
 import os
 from pathlib import Path
 
-import neptune as npt
+import neptune
 import numpy as np
 import tensorflow as tf
 from neptune import Run
-from npt.integrations.tensorflow_keras import NeptuneCallback  # type: ignore
+from neptune.integrations import tensorflow_keras as n_tf  # type: ignore
 from sklearn.model_selection import KFold  # type: ignore[import-untyped]
 
 from .config import Config
@@ -91,11 +91,10 @@ def train(run: Run) -> None:
         )
 
         model = build_model(num_labels)
-        model.summary()
         my_models.append(model)
 
         # Создаем Neptune callback для отслеживания метрик в текущем фолде
-        neptune_cbk = NeptuneCallback(
+        neptune_cbk = n_tf.NeptuneCallback(  # type: ignore
             run=run,
             base_namespace=f"training/model/folds/{fold_no}/metrics"
         )
@@ -115,16 +114,16 @@ def train(run: Run) -> None:
             scores = [scores]
         print(scores)
         print(
-            f"Fold {fold_no} - Loss: {scores[1]:.4f} "
-            f"- Accuracy: {scores[3] * 100:.2f}%")
+            f"Fold {fold_no} - Loss: {scores[0]:.4f} "
+            f"- Accuracy: {scores[1] * 100:.2f}%")
 
-        loss_per_fold.append(scores[1])
-        acc_per_fold.append(scores[3])
+        loss_per_fold.append(scores[0])
+        acc_per_fold.append(scores[1])
         histories.append(history)
 
         # Логируем итоговые метрики фолда в Neptune
-        run[f"training/model/folds/{fold_no}/final_loss"] = scores[1]
-        run[f"training/model/folds/{fold_no}/final_accuracy"] = scores[3]
+        run[f"training/model/folds/{fold_no}/final_loss"] = scores[0]
+        run[f"training/model/folds/{fold_no}/final_accuracy"] = scores[1]
 
     for i in range(Config.NUM_FOLDS):
         my_models[i].save(os.path.join(
@@ -140,7 +139,7 @@ def train(run: Run) -> None:
 def before_run() -> Run:
     tf.random.set_seed(Config.SEED)
     np.random.seed(Config.SEED)
-    return npt.init_run(
+    return neptune.init_run(
         project=Config.NEPTUNE,
         api_token=Config.NEPTUNE_TOKEN
     )
