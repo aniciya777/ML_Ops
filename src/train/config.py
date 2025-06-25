@@ -12,7 +12,7 @@ class Config:
     SPECTROGRAM_HEIGHT: int = 64
 
     LEARNING_RATE: float = 0.001
-    EPOCHS = 300
+    EPOCHS = 1000
     BATCH_SIZE = 32
 
     NUM_FOLDS = 5
