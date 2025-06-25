@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import NamedTuple, Sequence
 
 import numpy as np
 import tensorflow as tf
@@ -7,6 +8,42 @@ import tensorflow as tf
 from train.config import Config  # type: ignore
 
 from .utils import evaluate_model, fetch_model_at_rev
+
+
+class OneClassResult(NamedTuple):
+    precision: float
+    recall: float
+    f1: float
+
+
+class RevisionResult:
+    def __init__(self, num_folds: int, classes: Sequence[str]) -> None:
+        self._num_folds = num_folds
+        self._classes = classes
+        self._acc = 0.0
+        self._precisions = {cls: 0.0 for cls in classes}
+        self._recall = {cls: 0.0 for cls in classes}
+        self._f1 = {cls: 0.0 for cls in classes}
+
+    def add(self, report: dict) -> 'RevisionResult':
+        self._acc += report["accuracy"]
+        for i, cls in enumerate(self._classes):
+            s_i = str(i)
+            self._precisions[cls] += report[s_i]["precision"]
+            self._recall[cls] += report[s_i]["recall"]
+            self._f1[cls] += report[s_i]["f1-score"]
+        return self
+
+    @property
+    def accuracy(self) -> float:
+        return self._acc / self._num_folds
+
+    def __getitem__(self, item: str) -> OneClassResult:
+        return OneClassResult(
+            self._precisions[item] / self._num_folds,
+            self._recall[item] / self._num_folds,
+            self._f1[item] / self._num_folds,
+        )
 
 
 def main() -> None:
@@ -26,31 +63,33 @@ def main() -> None:
                               compression="GZIP")
     test_ds = ds.batch(Config.BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
     label_names = np.load(LABELS_PATH)
-    results = {}
+    model_files = [
+        MODEL_DIR / f"model{i + 1}.keras"
+        for i in range(Config.NUM_FOLDS)
+    ]
+
+    results: dict[str, RevisionResult] = {}
     for rev in REVISIONS:
         print(f"\n Process the revision `{rev}`")
-        local_model = fetch_model_at_rev(MODEL_DIR / "model1.keras", rev)
-        print(f"  downloaded in {local_model}")
+        results[rev] = RevisionResult(Config.NUM_FOLDS, label_names)
+        for filename in model_files:
+            local_model = fetch_model_at_rev(filename, rev)
+            report, cm = evaluate_model(local_model, test_ds)
+            results[rev].add(report)
+            os.remove(local_model)
 
-        report, cm = evaluate_model(local_model, test_ds)
-        results[rev] = {"report": report, "cm": cm}
-        os.remove(local_model)
-
-    # 5) пишем Markdown-отчет
     with open("comparison_versions.md", "w", encoding='utf-8') as mf:
         mf.write("# Сравнение версий модели на тесте\n\n")
         for rev, res in results.items():
             mf.write(f"## Revision `{rev}`\n\n")
-            acc = res["report"]["accuracy"]
-            mf.write(f"**Accuracy**: {acc:.4f}  \n\n")
+            mf.write(f"**Accuracy**: {res.accuracy:.4f}  \n\n")
             mf.write("**P / R / F1 по классам:**  \n")
-            for i, cls in enumerate(label_names):
-                m = res["report"][str(i)]
-                mf.write(f"- `{cls}`: P={m['precision']:.2f}, "
-                         f"R={m['recall']:.2f}, F1={m['f1-score']:.2f}\n")
-            mf.write("\nМатрица ошибок:\n\n```\n")
-            mf.write(np.array2string(res["cm"]))
-            mf.write("\n```\n\n---\n\n")
+            for cls in label_names:
+                mf.write(f"- `{cls}`: P={res[cls].precision:.2f}, "
+                         f"R={res[cls].recall:.2f}, F1={res[cls].f1:.2f}\n")
+    #         mf.write("\nМатрица ошибок:\n\n```\n")
+    #         mf.write(np.array2string(res["cm"]))
+    #         mf.write("\n```\n\n---\n\n")
 
 
 if __name__ == '__main__':

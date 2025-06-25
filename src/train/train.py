@@ -2,8 +2,11 @@ import logging
 import os
 from pathlib import Path
 
+import neptune as npt
 import numpy as np
 import tensorflow as tf
+from neptune import Run
+from npt.integrations.tensorflow_keras import NeptuneCallback  # type: ignore
 from sklearn.model_selection import KFold  # type: ignore[import-untyped]
 
 from .config import Config
@@ -13,7 +16,7 @@ from .utils import scheduler
 logging.basicConfig(level=logging.INFO)
 
 
-def main() -> None:
+def train(run: Run) -> None:
     logging.info(tf.config.list_physical_devices('GPU'))
     out_dir = Path("data/spec_ds")
     train_path = out_dir / "train_specs"
@@ -38,6 +41,18 @@ def main() -> None:
     class_loss_weight = 1
     recon_loss_weight = 20
 
+    # Логируем параметры модели в Neptune
+
+    run['training/model/params'] = {
+        'learning_rate': Config.LEARNING_RATE,
+        'epoch': Config.EPOCHS,
+        'batch': Config.BATCH_SIZE,
+        'num_folds': Config.NUM_FOLDS,
+        'input_shape': str(input_shape),
+        'class_loss_weight': class_loss_weight,
+        'recon_loss_weight': recon_loss_weight,
+    }
+
     acc_per_fold = []
     loss_per_fold = []
     my_models = []
@@ -56,16 +71,16 @@ def main() -> None:
 
         # Создаем tf.data.Dataset из списков
         train_ds_cv = tf.data.Dataset.from_tensor_slices(
-            (list(train_specs), (list(train_labels), list(train_specs))))
+            (list(train_specs), (list(train_labels))))
         val_ds_cv = tf.data.Dataset.from_tensor_slices(
-            (list(val_specs), (list(val_labels), list(val_specs))))
+            (list(val_specs), (list(val_labels))))
 
         # Батчим, кешируем и префетчим
         train_ds_cv = (
             train_ds_cv
-            .shuffle(1_000)
             .batch(Config.BATCH_SIZE)
             .cache()
+            .shuffle(1_000)
             .prefetch(tf.data.AUTOTUNE)
         )
         val_ds_cv = (
@@ -75,14 +90,15 @@ def main() -> None:
             .prefetch(tf.data.AUTOTUNE)
         )
 
-        model = build_model(input_shape, num_labels,
-                            class_loss_weight=class_loss_weight,
-                            recon_loss_weight=recon_loss_weight)
+        model = build_model(num_labels)
+        model.summary()
         my_models.append(model)
 
-        # # Создаем Neptune callback для отслеживания метрик в текущем фолде
-        # neptune_cbk = NeptuneCallback(run=run,
-        #                               base_namespace=f"training/model/folds/{fold_no}/metrics")
+        # Создаем Neptune callback для отслеживания метрик в текущем фолде
+        neptune_cbk = NeptuneCallback(
+            run=run,
+            base_namespace=f"training/model/folds/{fold_no}/metrics"
+        )
         lr_callback = tf.keras.callbacks.LearningRateScheduler(scheduler,
                                                                verbose=0)
 
@@ -90,7 +106,7 @@ def main() -> None:
             train_ds_cv,
             validation_data=val_ds_cv,
             epochs=Config.EPOCHS,
-            callbacks=[lr_callback],  # , neptune_cbk],
+            callbacks=[lr_callback, neptune_cbk],
             verbose=0
         )
 
@@ -107,21 +123,32 @@ def main() -> None:
         histories.append(history)
 
         # Логируем итоговые метрики фолда в Neptune
-        # run[f"training/model/folds/{fold_no}/final_loss"] = scores[1]
-        # run[f"training/model/folds/{fold_no}/final_accuracy"] = scores[3]
+        run[f"training/model/folds/{fold_no}/final_loss"] = scores[1]
+        run[f"training/model/folds/{fold_no}/final_accuracy"] = scores[3]
 
     for i in range(Config.NUM_FOLDS):
         my_models[i].save(os.path.join(
             'data', 'models',
             f'model{i + 1}.keras'
         ))
+    avg_accuracy = np.mean(acc_per_fold)
+    avg_loss = np.mean(loss_per_fold)
+    run["training/avg_accuracy"] = avg_accuracy
+    run["training/avg_loss"] = avg_loss
 
 
-def before_run() -> None:
+def before_run() -> Run:
     tf.random.set_seed(Config.SEED)
     np.random.seed(Config.SEED)
+    return npt.init_run(
+        project=Config.NEPTUNE,
+        api_token=Config.NEPTUNE_TOKEN
+    )
+
+
+def main() -> None:
+    train(before_run())
 
 
 if __name__ == '__main__':
-    before_run()
     main()

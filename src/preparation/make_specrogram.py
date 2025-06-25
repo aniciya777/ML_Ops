@@ -3,7 +3,8 @@ from pathlib import Path
 import numpy as np
 import tensorflow as tf
 
-from .config import Config
+from train.config import Config  # type: ignore
+
 from .utils import make_spec_ds, squeeze
 
 

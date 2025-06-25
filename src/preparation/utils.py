@@ -9,6 +9,7 @@ from pathlib import Path
 import librosa
 import numpy as np
 import soundfile  # type: ignore
+import tensorflow as tf
 from pydub import AudioSegment
 from pydub.silence import detect_nonsilent
 from scipy.io import wavfile
@@ -221,3 +222,25 @@ def transport_files(
             convert_to_16000hz(new_full_path, new_full_path)
             padding_file(new_full_path, new_full_path, duration=2.6)
             print(new_full_path, flush=True)
+
+
+def squeeze(
+        audio: tf.Tensor,
+        labels: tf.Tensor
+) -> tuple[tf.Tensor, tf.Tensor]:
+    audio = tf.squeeze(audio, axis=-1)
+    return audio, labels
+
+
+def get_spectrogram(waveform: tf.Tensor) -> tf.Tensor:
+    spectrogram = tf.signal.stft(
+        waveform, frame_length=128, frame_step=64)
+    spectrogram = tf.abs(spectrogram)
+    spectrogram = spectrogram[..., tf.newaxis]
+    return spectrogram
+
+
+def make_spec_ds(ds: tf.Tensor) -> tf.Tensor:
+    return ds.map(
+        map_func=lambda audio, label: (get_spectrogram(audio), label),
+        num_parallel_calls=tf.data.AUTOTUNE)
