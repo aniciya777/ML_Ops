@@ -6,8 +6,7 @@ import numpy as np
 import tensorflow as tf
 
 from train.config import Config  # type: ignore
-
-from .utils import evaluate_model, fetch_model_at_rev
+from validation.utils import fetch_model_at_rev, evaluate_model
 
 
 class OneClassResult(NamedTuple):
