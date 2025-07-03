@@ -9,7 +9,7 @@ from .utils import make_spec_ds, squeeze
 
 
 def main() -> None:
-    data_dir = "data/output/ML"
+    data_dir = "data/output"
 
     raw_train_ds, raw_test_ds = tf.keras.utils.audio_dataset_from_directory(
         directory=data_dir,

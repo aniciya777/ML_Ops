@@ -180,6 +180,30 @@ def padding_file(
     return True
 
 
+def transport_one_file(
+    old_full_path: Path,
+    new_full_path: Path,
+) -> None:
+    if old_full_path.suffix == ".ogg":
+        convert_ogg_to_wav(old_full_path, new_full_path)
+    elif old_full_path.suffix == ".opus":
+        convert_opus_to_wav(old_full_path, new_full_path)
+    elif old_full_path.suffix == ".mp3":
+        convert_mp3_to_wav(old_full_path, new_full_path)
+    elif old_full_path.suffix == ".wav":
+        move_file(old_full_path, new_full_path)
+    else:
+        print(f"transport_files: пропуск файла {old_full_path}",
+              file=sys.stderr)
+        return
+    convert_wav_to_16bit(new_full_path, new_full_path)
+    convert_stereo_to_mono(new_full_path, new_full_path)
+    remove_silence(new_full_path, new_full_path)
+    convert_to_16000hz(new_full_path, new_full_path)
+    padding_file(new_full_path, new_full_path, duration=2.6)
+    print(new_full_path, flush=True)
+
+
 def transport_files(
         old_dir: Path | str,
         new_dir: Path | str | None = None
@@ -204,24 +228,7 @@ def transport_files(
                     print(f"transport_files: пропуск файла {old_full_path}",
                           file=sys.stderr)
                     continue
-            if filename.suffix == ".ogg":
-                convert_ogg_to_wav(old_full_path, new_full_path)
-            elif filename.suffix == ".opus":
-                convert_opus_to_wav(old_full_path, new_full_path)
-            elif filename.suffix == ".mp3":
-                convert_mp3_to_wav(old_full_path, new_full_path)
-            elif filename.suffix == ".wav":
-                move_file(old_full_path, new_full_path)
-            else:
-                print(f"transport_files: пропуск файла {old_full_path}",
-                      file=sys.stderr)
-                continue
-            convert_wav_to_16bit(new_full_path, new_full_path)
-            convert_stereo_to_mono(new_full_path, new_full_path)
-            remove_silence(new_full_path, new_full_path)
-            convert_to_16000hz(new_full_path, new_full_path)
-            padding_file(new_full_path, new_full_path, duration=2.6)
-            print(new_full_path, flush=True)
+            transport_one_file(old_full_path, new_full_path)
 
 
 def squeeze(
