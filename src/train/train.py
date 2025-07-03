@@ -141,7 +141,7 @@ def before_run() -> Run:
     np.random.seed(Config.SEED)
     return neptune.init_run(
         project=Config.NEPTUNE,
-        api_token=Config.NEPTUNE_TOKEN
+        api_token=Config.NEPTUNE_API_TOKEN
     )
 
 
