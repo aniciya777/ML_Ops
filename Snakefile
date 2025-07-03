@@ -1,4 +1,6 @@
+import glob
 import os
+import itertools
 
 from dotenv import load_dotenv
 from snakemake.io import touch
@@ -18,6 +20,16 @@ LABELS = [
     "Relax",
     "Rock"
 ]
+SUPPORTED_EXTENSIONS = [
+    'wav',
+    'ogg',
+    'opus',
+    'mp3',
+]
+input_files = []
+for label, ext in itertools.product(LABELS, SUPPORTED_EXTENSIONS):
+    input_files += glob.glob(f"data/input/ML/{label}/*.{ext}")
+    input_files += glob.glob(f"data/input/ML/Watsapp/{label}/*.{ext}")
 
 
 rule all:
@@ -31,9 +43,7 @@ rule all:
 rule validation:
     input:
         "data/comparison_of_revisions.txt",
-        "data/spec_ds/label_names.npy",
-        "data/spec_ds/test_specs/dataset_spec.pb",
-        "data/spec_ds/test_specs/snapshot.metadata",
+        "data/.make_spec_done",
         marker="data/.pre_validation_done"
     output:
         "comparison_versions.md"
@@ -72,11 +82,7 @@ rule train:
 
 rule dvc_commit_and_push_spec:
     input:
-        "data/spec_ds/label_names.npy",
-        "data/spec_ds/test_specs/dataset_spec.pb",
-        "data/spec_ds/test_specs/snapshot.metadata",
-        "data/spec_ds/train_specs/dataset_spec.pb",
-        "data/spec_ds/train_specs/snapshot.metadata"
+        marker="data/.make_spec_done"
     output:
         "data/spec_ds.dvc"
     shell:
@@ -88,24 +94,25 @@ rule make_spectrogram:
     input:
         "data/output.dvc"
     output:
-        "data/spec_ds/label_names.npy",
-        "data/spec_ds/test_specs/dataset_spec.pb",
-        "data/spec_ds/test_specs/snapshot.metadata",
-        "data/spec_ds/train_specs/dataset_spec.pb",
-        "data/spec_ds/train_specs/snapshot.metadata"
+        marker=touch("data/.make_spec_done")
     shell:
         "uv run make_spec"
 
 
 rule dvc_commit_and_push_wav:
     input:
-        *(
-            f"data/output/ML/{lbl}/*.wav"
-            for lbl in LABELS
-        ),
         marker="data/.preprocessing_done"
     output:
         "data/output.dvc"
     shell:
         "yes | dvc commit \n"
         "dvc push"
+
+
+rule preprocessing:
+    input:
+        files=input_files
+    output:
+        marker=touch("data/.preprocessing_done")
+    script:
+        "src/preparation/prepare_snakemake.py"
