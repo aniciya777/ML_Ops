@@ -30,7 +30,7 @@ SUPPORTED_EXTENSIONS = [
 #
 # rule validation:
 #     input:
-#         "data/сomparison_of_revisions.txt"
+#         "data/comparison_of_revisions.txt"
 #     output:
 #         "comparison_versions.md"
 #     script:
@@ -41,8 +41,9 @@ rule pre_validation:
     input:
         "data/models.dvc"
     output:
-        "data/сomparison_of_revisions.txt"
+        marker="data/.pre_validation_done"
     shell:
         'dvc push \n'
         'git commit -a -m "Save new models" \n'
-        'git log -1 --format="%H" >> {output[0]}'
+        'git log -1 --format="%H" >> data/comparison_of_revisions.txt \n'
+        'touch {output.marker}'
