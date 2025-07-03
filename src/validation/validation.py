@@ -52,7 +52,7 @@ def main() -> None:
 
     MODEL_DIR = Path("data/models")
 
-    with open("data/сomparison_of_revisions.txt") as f:
+    with open("data/comparison_of_revisions.txt") as f:
         REVISIONS = map(str.strip, f.readlines())
 
     dummy = tf.data.Dataset.load(str(TEST_DS_PATH), compression="GZIP")

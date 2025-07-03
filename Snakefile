@@ -20,21 +20,22 @@ SUPPORTED_EXTENSIONS = [
     'ogg'
 ]
 
-# rule all:
-#     input:
-#         "comparison_versions.md"
-#     shell:
-#         'git add {input[0]} \n'
-#         'git commit -a -m "Update {input[0]}"'
-#
-#
-# rule validation:
-#     input:
-#         "data/comparison_of_revisions.txt"
-#     output:
-#         "comparison_versions.md"
-#     script:
-#         "src/validation/validation.py"
+rule all:
+    input:
+        "comparison_versions.md"
+    shell:
+        'git add {input[0]} \n'
+        'git commit -a -m "Update {input[0]}"'
+
+
+rule validation:
+    input:
+        "data/comparison_of_revisions.txt",
+        marker="data/.pre_validation_done"
+    output:
+        "comparison_versions.md"
+    script:
+        "src/validation/validation.py"
 
 
 rule pre_validation:
