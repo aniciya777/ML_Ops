@@ -10,3 +10,5 @@ data/output
 
 .mypy_cache/
 /.env
+
+.snakemake/
