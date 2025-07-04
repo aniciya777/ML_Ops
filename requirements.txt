@@ -15,5 +15,4 @@ types-tensorflow>=2.18.0.20250516
 keras~=3.10.0
 neptune~=1.14.0
 snakemake>=9.6.2
-snakemake-storage-plugin-webdav>=0.1.2
 python-dotenv>=1.1.1
