@@ -56,7 +56,8 @@ rule validation:
 
 rule pre_validation:
     input:
-        "data/models.dvc"
+        "data/models.dvc",
+        "data/.models_pushed_done"
     output:
         marker=touch("data/.pre_validation_done")
     shell:
@@ -69,7 +70,8 @@ rule dvc_commit_models:
     input:
         models
     output:
-        "data/models.dvc"
+        "data/models.dvc",
+        marker=touch("data/.models_pushed_done")
     shell:
         "dvc add data/models \n"
         "yes | dvc commit || true"
