@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 import numpy as np
@@ -6,6 +7,8 @@ import tensorflow as tf
 from train.config import Config  # type: ignore
 
 from .utils import make_spec_ds, squeeze
+
+logging.basicConfig(level=logging.INFO)
 
 
 def main() -> None:
@@ -24,6 +27,7 @@ def main() -> None:
     label_names = np.array(raw_train_ds.class_names, dtype='<U50')
     out_dir = Path("data/spec_ds")
     out_dir.mkdir(parents=True, exist_ok=True)
+    logging.info(f"Loaded classes: {label_names}")
     np.save(out_dir / "label_names.npy", label_names)
 
     # 2) Применяем squeeze и строим спектрограммы

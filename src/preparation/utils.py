@@ -6,7 +6,6 @@ import wave
 from os import makedirs, path, walk
 from pathlib import Path
 
-import librosa
 import numpy as np
 import soundfile  # type: ignore
 import tensorflow as tf
@@ -160,7 +159,7 @@ def padding_file(
         duration: float | int,
         noise_factor: float = 0.02  # Коэффициент шума
 ) -> bool:
-    signal, sr = librosa.load(input_path, sr=None)
+    signal, sr = soundfile.read(input_path, dtype='float32')
     target_length = int(duration * sr)  # Количество сэмплов для duration
     # Если аудиофайл короче 2.6 сек, дополняем тишиной
     if len(signal) == target_length:
@@ -178,6 +177,30 @@ def padding_file(
     # Сохраняем зашумленный файл
     soundfile.write(output_path, signal_noisy, sr)
     return True
+
+
+def transport_one_file(
+    old_full_path: Path,
+    new_full_path: Path,
+) -> None:
+    if old_full_path.suffix == ".ogg":
+        convert_ogg_to_wav(old_full_path, new_full_path)
+    elif old_full_path.suffix == ".opus":
+        convert_opus_to_wav(old_full_path, new_full_path)
+    elif old_full_path.suffix == ".mp3":
+        convert_mp3_to_wav(old_full_path, new_full_path)
+    elif old_full_path.suffix == ".wav":
+        move_file(old_full_path, new_full_path)
+    else:
+        print(f"transport_files: пропуск файла {old_full_path}",
+              file=sys.stderr)
+        return
+    convert_wav_to_16bit(new_full_path, new_full_path)
+    convert_stereo_to_mono(new_full_path, new_full_path)
+    remove_silence(new_full_path, new_full_path)
+    convert_to_16000hz(new_full_path, new_full_path)
+    padding_file(new_full_path, new_full_path, duration=2.6)
+    print(new_full_path, flush=True)
 
 
 def transport_files(
@@ -204,24 +227,7 @@ def transport_files(
                     print(f"transport_files: пропуск файла {old_full_path}",
                           file=sys.stderr)
                     continue
-            if filename.suffix == ".ogg":
-                convert_ogg_to_wav(old_full_path, new_full_path)
-            elif filename.suffix == ".opus":
-                convert_opus_to_wav(old_full_path, new_full_path)
-            elif filename.suffix == ".mp3":
-                convert_mp3_to_wav(old_full_path, new_full_path)
-            elif filename.suffix == ".wav":
-                move_file(old_full_path, new_full_path)
-            else:
-                print(f"transport_files: пропуск файла {old_full_path}",
-                      file=sys.stderr)
-                continue
-            convert_wav_to_16bit(new_full_path, new_full_path)
-            convert_stereo_to_mono(new_full_path, new_full_path)
-            remove_silence(new_full_path, new_full_path)
-            convert_to_16000hz(new_full_path, new_full_path)
-            padding_file(new_full_path, new_full_path, duration=2.6)
-            print(new_full_path, flush=True)
+            transport_one_file(old_full_path, new_full_path)
 
 
 def squeeze(

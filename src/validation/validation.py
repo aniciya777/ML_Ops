@@ -6,8 +6,7 @@ import numpy as np
 import tensorflow as tf
 
 from train.config import Config  # type: ignore
-
-from .utils import evaluate_model, fetch_model_at_rev
+from validation.utils import evaluate_model, fetch_model_at_rev  # type: ignore
 
 
 class OneClassResult(NamedTuple):
@@ -29,6 +28,8 @@ class RevisionResult:
         self._acc += report["accuracy"]
         for i, cls in enumerate(self._classes):
             s_i = str(i)
+            if s_i not in report:
+                continue
             self._precisions[cls] += report[s_i]["precision"]
             self._recall[cls] += report[s_i]["recall"]
             self._f1[cls] += report[s_i]["f1-score"]
@@ -53,7 +54,7 @@ def main() -> None:
 
     MODEL_DIR = Path("data/models")
 
-    with open("data/сomparison_of_revisions.txt") as f:
+    with open("data/comparison_of_revisions.txt") as f:
         REVISIONS = map(str.strip, f.readlines())
 
     dummy = tf.data.Dataset.load(str(TEST_DS_PATH), compression="GZIP")

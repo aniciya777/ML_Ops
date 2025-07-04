@@ -17,5 +17,5 @@ class Config:
 
     NUM_FOLDS = 5
 
-    NEPTUNE = "kisaost777/Hand"
-    NEPTUNE_TOKEN = os.getenv("NEPTUNE_API_TOKEN")
+    NEPTUNE = os.getenv("NEPTUNE")
+    NEPTUNE_API_TOKEN = os.getenv("NEPTUNE_API_TOKEN")

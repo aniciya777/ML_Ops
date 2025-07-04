@@ -2,7 +2,7 @@
 **/.venv
 **/.classpath
 **/.dockerignore
-**/.env
+.env.example
 **/.git
 **/.gitignore
 **/.project
