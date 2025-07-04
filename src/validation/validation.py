@@ -28,6 +28,8 @@ class RevisionResult:
         self._acc += report["accuracy"]
         for i, cls in enumerate(self._classes):
             s_i = str(i)
+            if s_i not in report:
+                continue
             self._precisions[cls] += report[s_i]["precision"]
             self._recall[cls] += report[s_i]["recall"]
             self._f1[cls] += report[s_i]["f1-score"]
