@@ -2,7 +2,7 @@ FROM python:3.12.10-slim
 
 RUN apt update
 
-RUN apt install -y --no-install-recommends ffmpeg && \
+RUN apt install -y --no-install-recommends ffmpeg git && \
     apt clean
 
 # Установка утилиты uv
@@ -27,8 +27,11 @@ EXPOSE 8000
 ENV TF_CPP_MIN_LOG_LEVEL=2
 ENV AUDIO_LENGTH=41600
 
+RUN git config --global user.name  "aniciya777" \
+ && git config --global user.email "kisaost777@gmail.com"
+
 # Копируем весь код приложения
 COPY . .
 
-# Команда запуска приложения
-CMD ["uv", "run", "api"]
+# Команда запуска пайплайна
+ENTRYPOINT ["./entrypoint.sh"]
