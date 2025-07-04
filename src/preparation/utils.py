@@ -6,7 +6,6 @@ import wave
 from os import makedirs, path, walk
 from pathlib import Path
 
-import librosa
 import numpy as np
 import soundfile  # type: ignore
 import tensorflow as tf
@@ -160,7 +159,7 @@ def padding_file(
         duration: float | int,
         noise_factor: float = 0.02  # Коэффициент шума
 ) -> bool:
-    signal, sr = librosa.load(input_path, sr=None)
+    signal, sr = soundfile.read(input_path, dtype='float32')
     target_length = int(duration * sr)  # Количество сэмплов для duration
     # Если аудиофайл короче 2.6 сек, дополняем тишиной
     if len(signal) == target_length:
