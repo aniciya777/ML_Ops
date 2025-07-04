@@ -118,7 +118,7 @@
 [Snakemake](https://snakemake.readthedocs.io/en/stable/).
 
 2. `Snakemake` уже установлен в Docker-образе:
-3. 
+
 ```shell
    uv add snakemake>=9.6.2
 ```
