@@ -144,5 +144,5 @@ rule preprocessing:
         r"""
         for f in {params.files}; do
             echo "$f"
-        done | uv run src/preparation/prepare.py
+        done | uv run src/preparation/prepare_cli.py
         """
