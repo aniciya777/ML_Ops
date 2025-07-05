@@ -8,6 +8,7 @@ authors = [
     {name = "Anastasiia Ostapchuk", email = "kisaost777@gmail.com"},                                                   
 ]
 dependencies = [
+    "clearml>=2.0.1",
     "dvc>=3.60.1",
     "dvc-webdav>=3.0.0",
     "fastapi>=0.115.13",
