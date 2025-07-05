@@ -13,8 +13,6 @@ dependencies = [
     "dvc-webdav>=3.0.0",
     "fastapi>=0.115.13",
     "matplotlib>=3.10.3",
-    "neptune>=1.14.0",
-    "neptune-tensorflow-keras>=2.2.2",
     "numpy==2.1.3",
     "pydub>=0.25.1",
     "python-dotenv>=1.1.1",

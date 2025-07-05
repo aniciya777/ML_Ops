@@ -1,24 +1,26 @@
-import os
+import os.path
+import sys
+from pathlib import Path
 
-from .utils import transport_files
+from utils import transport_one_file  # type: ignore
 
 
 def main() -> None:
-    os.chdir('data')
-    transport_files("input/ML/Relax", "output/ML/Relax")
-    transport_files("input/ML/Catch", "output/ML/Catch")
-    transport_files("input/ML/Gun", "output/ML/Gun")
-    transport_files("input/ML/Index", "output/ML/Index")
-    transport_files("input/ML/Like", "output/ML/Like")
-    transport_files("input/ML/Rock", "output/ML/Rock")
+    for s in map(str.strip, sys.stdin):
+        try:
+            inp = Path(s)
+            assert os.path.exists(inp), f'{inp} does not exist'
+            out = Path(
+                s
+                .replace('/Whatsapp', '')
+                .replace("data/input/ML", "data/output/ML")
+                + '.wav'
+            )
+            out.parent.mkdir(parents=True, exist_ok=True)
+            transport_one_file(inp, out)
+        except Exception as e:
+            print(e, file=sys.stderr)
 
-    transport_files("input/ML/Watsapp/Catch", "output/ML/Catch")
-    transport_files("input/ML/Watsapp/Gun", "output/ML/Gun")
-    transport_files("input/ML/Watsapp/Relax", "output/ML/Relax")
-    transport_files("input/ML/Watsapp/Index", "output/ML/Index")
-    transport_files("input/ML/Watsapp/Like", "output/ML/Like")
-    transport_files("input/ML/Watsapp/Rock", "output/ML/Rock")
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
