@@ -4,9 +4,13 @@ from dataclasses import dataclass
 
 @dataclass
 class Config:
+    PROJECT_NAME = 'HAND'
+
     SEED: int = 42
 
-    AUDIO_LENGTH: int = 41600
+    AUDIO_SAMPLE_RATE: int = 16000
+    AUDIO_DURATION: float = 2.6
+    AUDIO_LENGTH: int = int(AUDIO_SAMPLE_RATE * AUDIO_DURATION)
 
     SPECTROGRAM_WIDTH: int = 128
     SPECTROGRAM_HEIGHT: int = 64
@@ -16,6 +20,3 @@ class Config:
     BATCH_SIZE = 32
 
     NUM_FOLDS = 5
-
-    NEPTUNE = os.getenv("NEPTUNE")
-    NEPTUNE_API_TOKEN = os.getenv("NEPTUNE_API_TOKEN")

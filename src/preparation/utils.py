@@ -8,10 +8,12 @@ from pathlib import Path
 
 import numpy as np
 import soundfile  # type: ignore
-import tensorflow as tf
-from pydub import AudioSegment
-from pydub.silence import detect_nonsilent
-from scipy.io import wavfile
+import tensorflow as tf  # type: ignore
+from pydub import AudioSegment  # type: ignore
+from pydub.silence import detect_nonsilent  # type: ignore
+from scipy.io import wavfile  # type: ignore
+
+from train.config import Config  # type: ignore
 
 
 # Функция для конвертации ogg в wav
@@ -141,13 +143,13 @@ def remove_silence(
         print(f"remove_silence: Ошибка обработки {input_path}: {e}")
 
 
-def convert_to_16000hz(
+def convert_sample_rate(
         input_path: Path,
         output_path: Path
 ) -> None:
     try:
         audio = AudioSegment.from_file(input_path)
-        audio = audio.set_frame_rate(16000)  # Установка частоты дискретизации
+        audio = audio.set_frame_rate(Config.AUDIO_SAMPLE_RATE)
         audio.export(output_path, format="wav")
     except Exception as e:
         print(f"convert_to_16000hz: Ошибка обработки {input_path}: {e}")
@@ -161,7 +163,6 @@ def padding_file(
 ) -> bool:
     signal, sr = soundfile.read(input_path, dtype='float32')
     target_length = int(duration * sr)  # Количество сэмплов для duration
-    # Если аудиофайл короче 2.6 сек, дополняем тишиной
     if len(signal) == target_length:
         return True
     elif len(signal) > target_length:
@@ -198,8 +199,8 @@ def transport_one_file(
     convert_wav_to_16bit(new_full_path, new_full_path)
     convert_stereo_to_mono(new_full_path, new_full_path)
     remove_silence(new_full_path, new_full_path)
-    convert_to_16000hz(new_full_path, new_full_path)
-    padding_file(new_full_path, new_full_path, duration=2.6)
+    convert_sample_rate(new_full_path, new_full_path)
+    padding_file(new_full_path, new_full_path, duration=Config.AUDIO_DURATION)
 
 
 def transport_files(
@@ -249,3 +250,13 @@ def make_spec_ds(ds: tf.Tensor) -> tf.Tensor:
     return ds.map(
         map_func=lambda audio, label: (get_spectrogram(audio), label),
         num_parallel_calls=tf.data.AUTOTUNE)
+
+
+def get_audio_duration(filepath: Path) -> float | None:
+    """Возвращает длительность аудиофайла в секундах."""
+    try:
+        audio = AudioSegment.from_file(filepath)
+        return len(audio) / 1000
+    except Exception as e:
+        print(f"Не удалось прочитать файл {filepath}: {e}", file=sys.stderr)
+        return None
