@@ -5,13 +5,16 @@ from pathlib import Path
 
 from clearml import Task  # type: ignore
 from matplotlib import pyplot as plt
+from utils import get_audio_duration, transport_one_file  # type: ignore
 
 from train.config import Config  # type: ignore
-from utils import transport_one_file, get_audio_duration  # type: ignore
 
 
 def main() -> None:
-    task = Task.init(project_name=Config.PROJECT_NAME, task_name='prepare audio')
+    task = Task.init(
+        project_name=Config.PROJECT_NAME,
+        task_name='prepare audio'
+    )
     logger = task.get_logger()
     logger.report_single_value("sample rate", Config.AUDIO_SAMPLE_RATE)
     logger.report_single_value("duration", Config.AUDIO_DURATION)
@@ -23,7 +26,12 @@ def main() -> None:
         get_audio_duration(file) for file in files
     ]
     plt.figure(figsize=(10, 6))
-    plt.hist(audio_durations, bins=int(len(audio_durations) ** 0.5), color='skyblue', edgecolor='black')
+    plt.hist(
+        audio_durations,
+        bins=int(len(audio_durations) ** 0.5),
+        color='skyblue',
+        edgecolor='black'
+    )
     plt.axvline(x=Config.AUDIO_DURATION, linestyle='--', linewidth=2)
     plt.xlabel("Длительность аудиофайла (секунды)")
     plt.ylabel("Количество файлов")

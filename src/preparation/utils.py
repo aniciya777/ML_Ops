@@ -246,7 +246,8 @@ def get_spectrogram(waveform: tf.Tensor) -> tf.Tensor:
     return spectrogram
 
 
-def make_spec_ds(ds: tf.Tensor) -> tf.Tensor:
+def make_spec_ds(ds: tf.data.Dataset[tuple[tf.Tensor, tf.Tensor]]) \
+        -> tf.data.Dataset[tuple[tf.Tensor, tf.Tensor]]:
     return ds.map(
         map_func=lambda audio, label: (get_spectrogram(audio), label),
         num_parallel_calls=tf.data.AUTOTUNE)
