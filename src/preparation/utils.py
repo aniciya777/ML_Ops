@@ -200,7 +200,6 @@ def transport_one_file(
     remove_silence(new_full_path, new_full_path)
     convert_to_16000hz(new_full_path, new_full_path)
     padding_file(new_full_path, new_full_path, duration=2.6)
-    print(new_full_path, flush=True)
 
 
 def transport_files(
