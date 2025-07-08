@@ -1,13 +1,14 @@
+import argparse
 import logging
 import os
 from pathlib import Path
 
-import neptune
 import numpy as np
-import tensorflow as tf
-from neptune import Run
-from neptune.integrations import tensorflow_keras as n_tf  # type: ignore
-from sklearn.model_selection import KFold  # type: ignore[import-untyped]
+import tensorflow as tf  # type: ignore
+from clearml import Task  # type: ignore
+from sklearn.model_selection import KFold  # type: ignore
+
+from train.callbaks import ClearMLLogger  # type: ignore
 
 from .config import Config
 from .model import build_model
@@ -16,7 +17,17 @@ from .utils import scheduler
 logging.basicConfig(level=logging.INFO)
 
 
-def train(run: Run) -> None:
+def train() -> None:
+    task = Task.init(
+        project_name=Config.PROJECT_NAME,
+        task_name='train model',
+        auto_connect_frameworks={
+            'tensorflow': True,
+            'tensorboard': True,
+        }
+    )
+    task.set_progress(0)
+    logger = task.get_logger()
     logging.info(tf.config.list_physical_devices('GPU'))
     out_dir = Path("data/spec_ds")
     train_path = out_dir / "train_specs"
@@ -25,8 +36,10 @@ def train(run: Run) -> None:
         str(train_path),
         compression="GZIP"
     )
+
     label_names = np.load(out_dir / "label_names.npy")
     logging.info(f"Loaded classes: {label_names}")
+    task.upload_artifact("label_names", label_names)
 
     input_shape = (Config.SPECTROGRAM_WIDTH, Config.SPECTROGRAM_HEIGHT, 1)
     logging.info(f"input_shape: {input_shape}")
@@ -38,20 +51,6 @@ def train(run: Run) -> None:
         shuffle=True,
         random_state=Config.SEED
     )
-    class_loss_weight = 1
-    recon_loss_weight = 20
-
-    # Логируем параметры модели в Neptune
-
-    run['training/model/params'] = {
-        'learning_rate': Config.LEARNING_RATE,
-        'epoch': Config.EPOCHS,
-        'batch': Config.BATCH_SIZE,
-        'num_folds': Config.NUM_FOLDS,
-        'input_shape': str(input_shape),
-        'class_loss_weight': class_loss_weight,
-        'recon_loss_weight': recon_loss_weight,
-    }
 
     acc_per_fold = []
     loss_per_fold = []
@@ -80,7 +79,10 @@ def train(run: Run) -> None:
             train_ds_cv
             .batch(Config.BATCH_SIZE)
             .cache()
-            .shuffle(1_000)
+            .shuffle(
+                buffer_size=train_ds_cv.cardinality(),
+                seed=Config.SEED
+            )
             .prefetch(tf.data.AUTOTUNE)
         )
         val_ds_cv = (
@@ -93,19 +95,21 @@ def train(run: Run) -> None:
         model = build_model(num_labels)
         my_models.append(model)
 
-        # Создаем Neptune callback для отслеживания метрик в текущем фолде
-        neptune_cbk = n_tf.NeptuneCallback(  # type: ignore
-            run=run,
-            base_namespace=f"training/model/folds/{fold_no}/metrics"
-        )
-        lr_callback = tf.keras.callbacks.LearningRateScheduler(scheduler,
-                                                               verbose=0)
+        lr_callback = tf.keras.callbacks.LearningRateScheduler(scheduler)
 
         history = model.fit(
             train_ds_cv,
             validation_data=val_ds_cv,
             epochs=Config.EPOCHS,
-            callbacks=[lr_callback, neptune_cbk],
+            callbacks=[
+                lr_callback,
+                ClearMLLogger(
+                    task=task,
+                    fold_index=fold_no - 1,
+                    folds_count=Config.NUM_FOLDS,
+                    count_epochs=Config.EPOCHS
+                )
+            ],
             verbose=0
         )
 
@@ -121,32 +125,42 @@ def train(run: Run) -> None:
         acc_per_fold.append(scores[1])
         histories.append(history)
 
-        # Логируем итоговые метрики фолда в Neptune
-        run[f"training/model/folds/{fold_no}/final_loss"] = scores[0]
-        run[f"training/model/folds/{fold_no}/final_accuracy"] = scores[1]
-
     for i in range(Config.NUM_FOLDS):
         my_models[i].save(os.path.join(
             'data', 'models',
             f'model{i + 1}.keras'
         ))
-    avg_accuracy = np.mean(acc_per_fold)
-    avg_loss = np.mean(loss_per_fold)
-    run["training/avg_accuracy"] = avg_accuracy
-    run["training/avg_loss"] = avg_loss
+
+    avg_accuracy = sum(acc_per_fold) / Config.NUM_FOLDS
+    avg_loss = sum(loss_per_fold) / Config.NUM_FOLDS
+    logger.report_single_value("avg_accuracy", avg_accuracy)
+    logger.report_single_value("avg_loss", avg_loss)
+    task.set_progress(100)
+    task.close()
 
 
-def before_run() -> Run:
+def before_run():
     tf.random.set_seed(Config.SEED)
     np.random.seed(Config.SEED)
-    return neptune.init_run(
-        project=Config.NEPTUNE,
-        api_token=Config.NEPTUNE_API_TOKEN
-    )
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--epochs', '-e', type=int,
+                        default=Config.EPOCHS)
+    parser.add_argument('--batch_size', '-b', type=int,
+                        default=Config.BATCH_SIZE)
+    parser.add_argument('--learning_rate', '-lr', type=float,
+                        default=Config.LEARNING_RATE)
+    parser.add_argument('--folds', '-f', type=int,
+                        default=Config.NUM_FOLDS)
+    args = parser.parse_args()
+    Config.EPOCHS = args.epochs
+    Config.BATCH_SIZE = args.batch_size
+    Config.LEARNING_RATE = args.learning_rate
+    Config.NUM_FOLDS = args.folds
 
 
 def main() -> None:
-    train(before_run())
+    before_run()
+    train()
 
 
 if __name__ == '__main__':
