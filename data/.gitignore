@@ -2,7 +2,6 @@
 /output
 /models
 /spec_ds
-/.pre_validation_done
 /.preprocessing_done
 /.make_spec_done
 /.output_pushed_done

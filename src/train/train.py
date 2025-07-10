@@ -5,7 +5,7 @@ from pathlib import Path
 
 import numpy as np
 import tensorflow as tf  # type: ignore
-from clearml import Task  # type: ignore
+from clearml import Task, TaskTypes  # type: ignore
 from sklearn.model_selection import KFold  # type: ignore
 
 from train.callbaks import ClearMLLogger  # type: ignore
@@ -24,7 +24,8 @@ def train() -> None:
         auto_connect_frameworks={
             'tensorflow': True,
             'tensorboard': True,
-        }
+        },
+        task_type=TaskTypes.training
     )
     task.set_progress(0)
     logger = task.get_logger()
@@ -126,10 +127,12 @@ def train() -> None:
         histories.append(history)
 
     for i in range(Config.NUM_FOLDS):
-        my_models[i].save(os.path.join(
+        model_path = os.path.join(
             'data', 'models',
             f'model{i + 1}.keras'
-        ))
+        )
+        my_models[i].save(model_path)
+        task.upload_artifact(f'model{i + 1}', model_path)
 
     avg_accuracy = sum(acc_per_fold) / Config.NUM_FOLDS
     avg_loss = sum(loss_per_fold) / Config.NUM_FOLDS
@@ -142,7 +145,9 @@ def train() -> None:
 def before_run():
     tf.random.set_seed(Config.SEED)
     np.random.seed(Config.SEED)
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="Train a models with cross-validation"
+    )
     parser.add_argument('--epochs', '-e', type=int,
                         default=Config.EPOCHS)
     parser.add_argument('--batch_size', '-b', type=int,

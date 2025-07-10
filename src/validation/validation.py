@@ -1,61 +1,33 @@
-import os
+import warnings
+from argparse import ArgumentParser
 from pathlib import Path
-from typing import NamedTuple, Sequence
 
+from clearml import Task, TaskTypes  # type: ignore
+from clearml.binding.artifacts import Artifact  # type: ignore
+from clearml.task import TaskInstance  # type: ignore
 import numpy as np
-import tensorflow as tf
+import tensorflow as tf  # type: ignore
 
 from train.config import Config  # type: ignore
-from validation.utils import evaluate_model, fetch_model_at_rev  # type: ignore
+from validation.classes import RevisionResult  # type: ignore
+from validation.clearml_task_api import (  # type: ignore
+    get_tasks_by_ids, get_last_tasks, get_url_for_task
+)
+from validation.utils import fetch_model_at_rev, evaluate_model  # type: ignore
+
+warnings.filterwarnings(
+    "ignore",
+    message="FigureCanvasAgg is non-interactive"
+)
 
 
-class OneClassResult(NamedTuple):
-    precision: float
-    recall: float
-    f1: float
-
-
-class RevisionResult:
-    def __init__(self, num_folds: int, classes: Sequence[str]) -> None:
-        self._num_folds = num_folds
-        self._classes = classes
-        self._acc = 0.0
-        self._precisions = {cls: 0.0 for cls in classes}
-        self._recall = {cls: 0.0 for cls in classes}
-        self._f1 = {cls: 0.0 for cls in classes}
-
-    def add(self, report: dict) -> 'RevisionResult':
-        self._acc += report["accuracy"]
-        for i, cls in enumerate(self._classes):
-            s_i = str(i)
-            if s_i not in report:
-                continue
-            self._precisions[cls] += report[s_i]["precision"]
-            self._recall[cls] += report[s_i]["recall"]
-            self._f1[cls] += report[s_i]["f1-score"]
-        return self
-
-    @property
-    def accuracy(self) -> float:
-        return self._acc / self._num_folds
-
-    def __getitem__(self, item: str) -> OneClassResult:
-        return OneClassResult(
-            self._precisions[item] / self._num_folds,
-            self._recall[item] / self._num_folds,
-            self._f1[item] / self._num_folds,
-        )
-
-
-def main() -> None:
+def validate(
+        tasks: list[TaskInstance],
+        current_task: Task
+) -> None:
     SPEC_DS_DIR = Path("data/spec_ds")
     TEST_DS_PATH = SPEC_DS_DIR / "test_specs"
     LABELS_PATH = SPEC_DS_DIR / "label_names.npy"
-
-    MODEL_DIR = Path("data/models")
-
-    with open("data/comparison_of_revisions.txt") as f:
-        REVISIONS = map(str.strip, f.readlines())
 
     dummy = tf.data.Dataset.load(str(TEST_DS_PATH), compression="GZIP")
     spec = dummy.element_spec
@@ -64,33 +36,71 @@ def main() -> None:
                               compression="GZIP")
     test_ds = ds.batch(Config.BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
     label_names = np.load(LABELS_PATH)
-    model_files = [
-        MODEL_DIR / f"model{i + 1}.keras"
-        for i in range(Config.NUM_FOLDS)
-    ]
 
     results: dict[str, RevisionResult] = {}
-    for rev in REVISIONS:
-        print(f"\n Process the revision `{rev}`")
-        results[rev] = RevisionResult(Config.NUM_FOLDS, label_names)
-        for filename in model_files:
-            local_model = fetch_model_at_rev(filename, rev)
-            report, cm = evaluate_model(local_model, test_ds)
-            results[rev].add(report)
-            os.remove(local_model)
+    for i, task in enumerate(tasks):
+        current_task.set_progress(int(i / len(tasks) * 100))
+
+        rev = str(task.task_id)
+        results[rev] = RevisionResult(label_names, task)
+
+        model_files: list[Path] = []
+        for art_name in task.artifacts.keys():
+            if art_name.startswith("model"):
+                model_files.append(Path(task.artifacts[art_name].get()))
+
+        for j, filename in enumerate(model_files):
+            current_task.set_progress(int(
+                (i + j / len(model_files)) / len(tasks) * 100
+            ))
+            results[rev].add(*evaluate_model(filename, test_ds))
 
     with open("comparison_versions.md", "w", encoding='utf-8') as mf:
         mf.write("# Сравнение версий модели на тесте\n\n")
-        for rev, res in results.items():
-            mf.write(f"## Revision `{rev}`\n\n")
-            mf.write(f"**Accuracy**: {res.accuracy:.4f}  \n\n")
-            mf.write("**P / R / F1 по классам:**  \n")
-            for cls in label_names:
-                mf.write(f"- `{cls}`: P={res[cls].precision:.2f}, "
-                         f"R={res[cls].recall:.2f}, F1={res[cls].f1:.2f}\n")
-    #         mf.write("\nМатрица ошибок:\n\n```\n")
-    #         mf.write(np.array2string(res["cm"]))
-    #         mf.write("\n```\n\n---\n\n")
+        for item in results.values():
+            item.write_as_markdown(mf)
+
+
+def main() -> None:
+    task = Task.init(
+        project_name=Config.PROJECT_NAME,
+        task_name='validation',
+        task_type=TaskTypes.testing,
+        auto_connect_frameworks={
+            'matplotlib': True,
+            'tensorflow': False,
+            'detect_repository': False,
+        }
+    )
+    task.set_progress(0)
+    parser = ArgumentParser(
+        description="Validation tool for ML project with ClearML"
+    )
+    parser.add_argument('--project', '-p',
+                        default=Config.PROJECT_NAME,
+                        help="Project name")
+    parser.add_argument('--task', '-t',
+                        default='train model',
+                        help="Task name")
+    parser.add_argument('--number', '-n', type=int,
+                        default=-1,
+                        help="The last tasks to validate")
+    parser.add_argument('--ids', nargs='*', type=str)
+    args = parser.parse_args()
+    if args.ids:
+        tasks = get_tasks_by_ids(
+            project_name=args.project,
+            ids=args.ids,
+        )
+    else:
+        tasks = get_last_tasks(
+            project_name=args.project,
+            task_name=args.task,
+            count=args.number,
+        )
+    validate(tasks, task)
+    task.set_progress(100)
+    task.close()
 
 
 if __name__ == '__main__':

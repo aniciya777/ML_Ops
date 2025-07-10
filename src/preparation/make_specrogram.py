@@ -3,7 +3,7 @@ from pathlib import Path
 
 import numpy as np
 import tensorflow as tf  # type: ignore
-from clearml import Task  # type: ignore
+from clearml import Task, TaskTypes  # type: ignore
 
 from train.config import Config  # type: ignore
 from visualisation.utils import (  # type: ignore
@@ -23,7 +23,8 @@ def main() -> None:
 
     task = Task.init(
         project_name=Config.PROJECT_NAME,
-        task_name='make spectrogram'
+        task_name='make spectrogram',
+        task_type=TaskTypes.data_processing
     )
     logger = task.get_logger()
     task.set_progress(0)

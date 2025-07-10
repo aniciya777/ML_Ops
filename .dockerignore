@@ -11,14 +11,11 @@
 **/*.*proj.user
 **/*.dbmdl
 **/*.jfm
-**/bin
 **/charts
 **/docker-compose*
-**/compose*
 **/Dockerfile*
 **/node_modules
 **/npm-debug.log
-**/obj
 **/secrets.dev.yaml
 **/values.dev.yaml
 **/.github
@@ -39,6 +36,5 @@ data/spec_ds
 data/models
 data/.make_spec_done
 data/.output_pushed_done
-data/.pre_validation_done
 data/.preprocessing_done
 data/.models_pushed_done

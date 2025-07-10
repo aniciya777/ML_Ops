@@ -1,5 +1,4 @@
 import glob
-import os
 import itertools
 import shlex
 
@@ -8,6 +7,8 @@ from snakemake.io import touch
 
 
 load_dotenv()
+
+BATCH_SIZES = [16, 32, 64]
 
 models = [
     f"data/models/model{i + 1}.keras"
@@ -43,30 +44,17 @@ rule all:
 
 rule validation:
     input:
-        "data/comparison_of_revisions.txt",
         "data/spec_ds/label_names.npy",
         "data/spec_ds/test_specs/dataset_spec.pb",
         "data/spec_ds/test_specs/snapshot.metadata",
-        marker="data/.pre_validation_done"
+        marker="data/.models_pushed_done"
     output:
         "comparison_versions.md"
-    script:
-        "src/validation/validation.py"
-
-
-rule pre_validation:
-    input:
-        "data/models.dvc",
-        "data/.models_pushed_done"
-    output:
-        marker=touch("data/.pre_validation_done")
     shell:
-        'dvc push \n'
-        'git commit -a -m "Save new models" \n'
-        'git log -1 --format="%H" >> data/comparison_of_revisions.txt'
+        f"uv run validate -n 3"
 
 
-rule dvc_commit_models:
+rule dvc_commit_and_push_models:
     input:
         models
     output:
@@ -74,7 +62,8 @@ rule dvc_commit_models:
         marker=touch("data/.models_pushed_done")
     shell:
         "dvc add data/models \n"
-        "yes | dvc commit || true"
+        "yes | dvc commit || true\n"
+        "dvc push"
 
 
 rule train:

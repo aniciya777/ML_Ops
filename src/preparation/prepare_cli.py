@@ -3,7 +3,7 @@ import os.path
 import sys
 from pathlib import Path
 
-from clearml import Task  # type: ignore
+from clearml import Task, TaskTypes  # type: ignore
 from matplotlib import pyplot as plt
 from utils import get_audio_duration, transport_one_file  # type: ignore
 
@@ -13,7 +13,8 @@ from train.config import Config  # type: ignore
 def main() -> None:
     task = Task.init(
         project_name=Config.PROJECT_NAME,
-        task_name='prepare audio'
+        task_name='prepare audio',
+        task_type=TaskTypes.data_processing
     )
     logger = task.get_logger()
     logger.report_single_value("sample rate", Config.AUDIO_SAMPLE_RATE)

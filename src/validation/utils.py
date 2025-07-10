@@ -4,6 +4,7 @@ from pathlib import Path
 import dvc.api  # type: ignore
 import numpy as np
 import tensorflow as tf
+from numpy._typing import NDArray
 from sklearn.metrics import classification_report  # type: ignore
 from sklearn.metrics import confusion_matrix
 
@@ -28,7 +29,10 @@ def fetch_model_at_rev(dvc_path: Path, rev: str) -> str:
         return tmp.name
 
 
-def evaluate_model(model_file: str, test_ds):
+def evaluate_model(
+        model_file: Path,
+        test_ds
+) -> tuple[dict, NDArray[np.int64]]:
     model = tf.keras.models.load_model(
         model_file,
         custom_objects={"SSIMLoss": SSIMLoss}
