@@ -2,18 +2,18 @@ import warnings
 from argparse import ArgumentParser
 from pathlib import Path
 
-from clearml import Task, TaskTypes  # type: ignore
-from clearml.binding.artifacts import Artifact  # type: ignore
-from clearml.task import TaskInstance  # type: ignore
 import numpy as np
 import tensorflow as tf  # type: ignore
+from clearml import Task, TaskTypes  # type: ignore
+from clearml.task import TaskInstance  # type: ignore
 
 from train.config import Config  # type: ignore
 from validation.classes import RevisionResult  # type: ignore
 from validation.clearml_task_api import (  # type: ignore
-    get_tasks_by_ids, get_last_tasks, get_url_for_task
+    get_last_tasks,
+    get_tasks_by_ids,
 )
-from validation.utils import fetch_model_at_rev, evaluate_model  # type: ignore
+from validation.utils import evaluate_model  # type: ignore
 
 warnings.filterwarnings(
     "ignore",

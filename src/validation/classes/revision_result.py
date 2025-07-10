@@ -97,7 +97,6 @@ class RevisionResult:
         )
         file.write(f"![Confusion matrix](data:image/png;base64,{img})\n\n")
 
-
     def draw_confusion_matrix(
         self,
         is_show: bool = True,

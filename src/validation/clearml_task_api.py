@@ -1,6 +1,6 @@
 from typing import Sequence
 
-from clearml.task import TaskInstance, Task  # type: ignore
+from clearml.task import Task, TaskInstance  # type: ignore
 
 
 def get_last_tasks(
@@ -30,6 +30,6 @@ def get_tasks_by_ids(
 
 def get_url_for_task(task: Task) -> str:
     return Task.get_task_output_log_web_page(
-    task_id=task.task_id,
-    project_id=task.project
-)
+        task_id=task.task_id,
+        project_id=task.project
+    )
