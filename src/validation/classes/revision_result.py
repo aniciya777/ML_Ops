@@ -1,5 +1,3 @@
-import base64
-import io
 from io import TextIOWrapper
 from pathlib import Path
 from typing import Sequence
