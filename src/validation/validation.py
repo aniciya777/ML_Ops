@@ -4,9 +4,9 @@ from pathlib import Path
 
 import numpy as np
 import tensorflow as tf  # type: ignore
-from clearml import Task, TaskTypes  # type: ignore
 from clearml.task import TaskInstance  # type: ignore
 
+from clearml import Task, TaskTypes  # type: ignore
 from train.config import Config  # type: ignore
 from validation.classes.revision_result import RevisionResult  # type: ignore
 from validation.clearml_task_api import (  # type: ignore

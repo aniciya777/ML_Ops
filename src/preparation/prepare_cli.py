@@ -3,10 +3,10 @@ import os.path
 import sys
 from pathlib import Path
 
-from clearml import Task, TaskTypes  # type: ignore
 from matplotlib import pyplot as plt
 from utils import get_audio_duration, transport_one_file  # type: ignore
 
+from clearml import Task, TaskTypes  # type: ignore
 from train.config import Config  # type: ignore
 
 

@@ -4,10 +4,10 @@ from typing import Sequence
 
 import numpy as np
 import seaborn as sns  # type: ignore
-from clearml import Task  # type: ignore
 from matplotlib import pyplot as plt
 from numpy._typing import NDArray
 
+from clearml import Task  # type: ignore
 from validation.classes.one_class_result import OneClassResult  # type: ignore
 from validation.clearml_task_api import get_url_for_task  # type: ignore
 
