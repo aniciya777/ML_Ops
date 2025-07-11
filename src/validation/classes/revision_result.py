@@ -1,6 +1,7 @@
 import base64
 import io
 from io import TextIOWrapper
+from pathlib import Path
 from typing import Sequence
 
 import numpy as np
@@ -92,17 +93,17 @@ class RevisionResult:
         file.write("\n")
         img = self.draw_confusion_matrix(
             is_show=True,
-            is_base64=True,
+            save_png=True,
             title=f"Confusion matrix task_id={self.id}",
         )
-        file.write(f"![Confusion matrix](data:image/png;base64,{img})\n\n")
+        file.write(f"![Confusion matrix]({img})\n\n")
 
     def draw_confusion_matrix(
         self,
         is_show: bool = True,
-        is_base64: bool = False,
+        save_png: bool = False,
         title: str | None = None,
-    ) -> str | None:
+    ) -> Path | str | None:
         fig, ax = plt.subplots(figsize=(6, 5))
         sns.heatmap(self.confusion_matrix,
                     xticklabels=self._classes,
@@ -115,14 +116,16 @@ class RevisionResult:
         if title is not None:
             plt.title(title)
         plt.tight_layout()
-        if is_show and not is_base64:
+        if is_show and not save_png:
             plt.show()
-        elif is_base64:
-            buf = io.BytesIO()
-            fig.savefig(buf, format='png', dpi=300, bbox_inches='tight')
+        elif save_png:
+            filename = Path("static", "plots", self.id + ".png")
+            fig.savefig(
+                filename,
+                format='png', dpi=300, bbox_inches='tight'
+            )
             if is_show:
                 plt.show()
             plt.close(fig)
-            buf.seek(0)
-            return base64.b64encode(buf.read()).decode('ascii')
+            return filename
         return None

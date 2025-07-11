@@ -45,6 +45,7 @@ rule all:
         "comparison_versions.md"
     shell:
         'git add {input[0]} \n'
+        'git add "static/plots/*" \n'
         'git commit -a -m "Update {input[0]}"'
 
 
@@ -57,6 +58,7 @@ rule validation:
     output:
         "comparison_versions.md"
     shell:
+        "rm static/plots/*.png || true \n"
         f"uv run validate -n {len(BATCH_SIZES)}"
 
 
