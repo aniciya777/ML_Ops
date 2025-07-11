@@ -39,3 +39,6 @@ data/.output_pushed_done
 data/.preprocessing_done
 data/.models_pushed_done
 data/.train_done_*
+
+clearml/
+сlearml/

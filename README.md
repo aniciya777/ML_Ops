@@ -200,7 +200,7 @@
     - **Вариант B: Поднять собственный сервер**
 
       ```shell
-        docker-compose -f docker-compose-clearml.yaml up -d 
+        docker-compose -f docker-compose-clearml.yaml up
       ```
       
       По умолчанию сервис доступен на порту `8080`, API – на `8008`.

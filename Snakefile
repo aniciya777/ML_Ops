@@ -76,15 +76,15 @@ rule train:
     input:
         "data/spec_ds.dvc"
     output:
-        directory("data/models/batch{bs}"),
+        dir=directory("data/models/batch{bs}"),
         marker=touch("data/.train_done_{bs}")
     params:
         batch_size=lambda wildcards: wildcards.bs
     wildcard_constraints:
         batch_size="|".join(str(bs) for bs in BATCH_SIZES)
     shell:
-        "mkdir -p {output} \n"
-        "uv run train --batch_size {bs} --output-dir {output}"
+        "mkdir -p {output.dir} \n"
+        "uv run train --batch_size {wildcards.bs} --output-dir \"{output.dir}\""
 
 
 rule dvc_commit_and_push_spec:

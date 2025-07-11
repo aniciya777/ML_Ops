@@ -12,3 +12,5 @@ data/output
 /.env
 
 .snakemake/
+clearml/
+сlearml/
