@@ -5,9 +5,9 @@ from pathlib import Path
 
 import numpy as np
 import tensorflow as tf  # type: ignore
-from clearml import Task, TaskTypes  # type: ignore
 from sklearn.model_selection import KFold  # type: ignore
 
+from clearml import Task, TaskTypes  # type: ignore
 from train.callbaks import ClearMLLogger  # type: ignore
 
 from .config import Config

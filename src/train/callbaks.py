@@ -1,7 +1,8 @@
 from datetime import datetime
 
-from clearml import Task  # type: ignore
 from tensorflow.keras.callbacks import Callback  # type: ignore
+
+from clearml import Task  # type: ignore
 
 
 class ClearMLLogger(Callback):
