@@ -3,8 +3,8 @@ from pathlib import Path
 
 import numpy as np
 import tensorflow as tf  # type: ignore
-
 from clearml import Task, TaskTypes  # type: ignore
+
 from train.config import Config  # type: ignore
 from visualisation.utils import (  # type: ignore
     plot_sample_spectrogram,
