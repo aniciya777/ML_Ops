@@ -8,7 +8,7 @@ from clearml import Task, TaskTypes  # type: ignore
 from clearml.task import TaskInstance  # type: ignore
 
 from train.config import Config  # type: ignore
-from validation.classes import RevisionResult  # type: ignore
+from validation.classes.revision_result import RevisionResult  # type: ignore
 from validation.clearml_task_api import (  # type: ignore
     get_last_tasks,
     get_tasks_by_ids,
