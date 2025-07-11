@@ -24,6 +24,7 @@ def train() -> None:
         auto_connect_frameworks={
             'tensorflow': True,
             'tensorboard': True,
+            'detect_repository': False,
         },
         task_type=TaskTypes.training
     )
@@ -128,7 +129,7 @@ def train() -> None:
 
     for i in range(Config.NUM_FOLDS):
         model_path = os.path.join(
-            'data', 'models',
+            Config.output_dir,  # type: ignore
             f'model{i + 1}.keras'
         )
         my_models[i].save(model_path)
@@ -156,11 +157,14 @@ def before_run():
                         default=Config.LEARNING_RATE)
     parser.add_argument('--folds', '-f', type=int,
                         default=Config.NUM_FOLDS)
+    parser.add_argument('--output-dir', '-o', type=str,
+                        default='data/models')
     args = parser.parse_args()
     Config.EPOCHS = args.epochs
     Config.BATCH_SIZE = args.batch_size
     Config.LEARNING_RATE = args.learning_rate
     Config.NUM_FOLDS = args.folds
+    Config.output_dir = args.output_dir
 
 
 def main() -> None:

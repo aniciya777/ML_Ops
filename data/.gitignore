@@ -5,4 +5,5 @@
 /.preprocessing_done
 /.make_spec_done
 /.output_pushed_done
+/.train_done_*
 /.models_pushed_done

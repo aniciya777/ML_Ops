@@ -5,15 +5,21 @@ import shlex
 from dotenv import load_dotenv
 from snakemake.io import touch
 
+from train.config import Config
+
 
 load_dotenv()
 
 BATCH_SIZES = [16, 32, 64]
 
-models = [
-    f"data/models/model{i + 1}.keras"
-    for i in range(5)
-]
+
+def models_for(batch_size):
+    return [
+        f"data/models/batch_{batch_size}/model{i + 1}.keras"
+        for i in range(Config.NUM_FOLDS)
+    ]
+
+
 LABELS = [
     "Catch",
     "Gun",
@@ -29,7 +35,7 @@ SUPPORTED_EXTENSIONS = [
     'mp3',
 ]
 input_files = []
-for label, ext in itertools.product(LABELS, SUPPORTED_EXTENSIONS):
+for label, ext in itertools.product(LABELS,SUPPORTED_EXTENSIONS):
     input_files += glob.glob(f"data/input/ML/{label}/*.{ext}")
     input_files += glob.glob(f"data/input/ML/Whatsapp/{label}/*.{ext}")
 
@@ -51,12 +57,12 @@ rule validation:
     output:
         "comparison_versions.md"
     shell:
-        f"uv run validate -n 3"
+        f"uv run validate -n {len(BATCH_SIZES)}"
 
 
 rule dvc_commit_and_push_models:
     input:
-        models
+        expand("data/.train_done_{bs}", bs=BATCH_SIZES),
     output:
         "data/models.dvc",
         marker=touch("data/.models_pushed_done")
@@ -70,9 +76,15 @@ rule train:
     input:
         "data/spec_ds.dvc"
     output:
-        models
+        directory("data/models/batch{bs}"),
+        marker=touch("data/.train_done_{bs}")
+    params:
+        batch_size=lambda wildcards: wildcards.bs
+    wildcard_constraints:
+        batch_size="|".join(str(bs) for bs in BATCH_SIZES)
     shell:
-        "uv run train"
+        "mkdir -p {output} \n"
+        "uv run train --batch_size {bs} --output-dir {output}"
 
 
 rule dvc_commit_and_push_spec:

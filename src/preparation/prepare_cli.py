@@ -14,7 +14,11 @@ def main() -> None:
     task = Task.init(
         project_name=Config.PROJECT_NAME,
         task_name='prepare audio',
-        task_type=TaskTypes.data_processing
+        task_type=TaskTypes.data_processing,
+        auto_connect_frameworks={
+            'matplotlib': True,
+            'detect_repository': False,
+        }
     )
     logger = task.get_logger()
     logger.report_single_value("sample rate", Config.AUDIO_SAMPLE_RATE)
